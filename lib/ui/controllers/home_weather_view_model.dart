@@ -1,4 +1,6 @@
 // ViewController seguindo padrão MVVM com Signals e Commands observáveis
+import 'dart:async';
+
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:weather_app/domain/models/weather.dart';
 import 'package:weather_app/domain/usecases/weather_usecases_facade_contract.dart';
@@ -10,6 +12,8 @@ class WeatherHomeViewController {
 
   // Signals de estado geral da ViewController
   final _isInitialized = signal<bool>(false);
+
+  Timer? _autoRefreshTimer;
 
   // Estado do ViewController usando Signals
   final _currentWeather = signal<Weather?>(null);
@@ -57,6 +61,7 @@ class WeatherHomeViewController {
     : _weatherFacade = weatherFacade {
     _initializeCommands();
     _initializeData();
+    _startAutoRefresh();
   }
 
   // Inicializar comandos
@@ -78,8 +83,8 @@ class WeatherHomeViewController {
       if (result == null) return;
 
       result.fold(
-        onSuccess: (whether) {
-          _currentWeather.value = whether;
+        onSuccess: (weather) {
+          _currentWeather.value = weather;
           _clearError();
         },
         onFailure: (error) {
@@ -123,10 +128,10 @@ class WeatherHomeViewController {
       if (_getCompleteWeatherCommand.isSuccess.value) {
         final data =
             _getCompleteWeatherCommand.result.value?.successValueOrNull;
-        
+
         _currentWeather.value = data?.$1;
         _forecast.value = data!.$2;
-        
+
         _clearError();
       }
     });
@@ -139,6 +144,12 @@ class WeatherHomeViewController {
     _isInitialized.value = true;
   }
 
+  void _startAutoRefresh() {
+    _autoRefreshTimer = Timer.periodic(const Duration(minutes: 10), (_) async {
+      await refreshWeather();
+    });
+  }
+
   // Buscar clima por nome da cidade
   Future<void> searchWeatherByCity(String cityName) async {
     if (cityName.trim().isEmpty) {
@@ -149,9 +160,13 @@ class WeatherHomeViewController {
     //_searchQuery.value = cityName.trim();
     _clearError();
     await _getCompleteWeatherCommand.executeWith((cityName: cityName.trim()));
+  }
 
-    // await _getCurrentWeatherCommand.executeWith((cityName: cityName.trim()));
-    // await _getForecastCommand.executeWith((cityName: cityName.trim()));
+  Future<void> refreshWeather() async {
+    if (currentWeather.value != null) {
+      final city = currentWeather.value!.cityName;
+      await searchWeatherByCity(city);
+    }
   }
 
   // Métodos privados
@@ -163,11 +178,12 @@ class WeatherHomeViewController {
   void _setError(String message) {
     _errorMessage.value = message;
   }
-   // Limpar busca
+
+  // Limpar busca
   void clearSearch() {
     _clearError();
     _initializeData();
-    
+
     // Limpar comandos
     _getCurrentWeatherCommand.clear();
     _getForecastCommand.clear();
@@ -175,8 +191,10 @@ class WeatherHomeViewController {
     _getForecastByCoordinatesCommand.clear();
     _getCompleteWeatherCommand.clear();
   }
-    // Dispose resources
+
+  // Dispose resources
   void dispose() {
+    _autoRefreshTimer?.cancel();
     _getCurrentWeatherCommand.reset();
     _getForecastCommand.reset();
     _getWeatherByCoordinatesCommand.reset();
