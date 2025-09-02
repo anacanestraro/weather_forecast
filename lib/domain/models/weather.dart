@@ -23,65 +23,81 @@ class Weather {
 
   // Factory constructor para criar Weather a partir de JSON da API
   factory Weather.fromJson(Map<String, dynamic> json) {
-    final main = json['main'];
-    final weather = json['weather'][0];
-    final wind = json['wind'] ?? {};
+    final current = json['current'];
+    final location = json['location'];
+    final condition = current['condition'];
+    final conditionCode = condition['code'] as int;
     
     return Weather(
-      cityName: json['name'],
-      temperature: (main['temp'] as num).toDouble(),
-      condition: _translateCondition(weather['main']),
-      icon: _getIconFromCondition(weather['main']),
-      description: weather['description'],
-      humidity: (main['humidity'] as num).toDouble(),
-      windSpeed: (wind['speed'] as num?)?.toDouble() ?? 0,
-      pressure: (main['pressure'] as num).toDouble(),
+      cityName: location['name'],
+      temperature: (current['temp_c'] as num).toDouble(),
+      condition: _translateCondition(conditionCode),
+      icon: _getIconFromCondition(conditionCode),
+      description: condition['text'],
+      humidity: (current['humidity'] as num).toDouble(),
+      windSpeed: (current['wind_kph'] as num?)?.toDouble() ?? 0,
+      pressure: (current['pressure_mb'] as num).toDouble(),
     );
   }
 
-  static String _translateCondition(String condition) {
-    switch (condition.toLowerCase()) {
-      case 'clear':
-        return 'Ensolarado';
-      case 'clouds':
-        return 'Nublado';
-      case 'rain':
-        return 'Chuva';
-      case 'drizzle':
-        return 'Garoa';
-      case 'thunderstorm':
-        return 'Tempestade';
-      case 'snow':
-        return 'Neve';
-      case 'mist':
-      case 'fog':
-        return 'Neblina';
-      default:
-        return condition;
-    }
+  static String _translateCondition(int code) {
+    return _conditionMap[code]?['translation'] ?? 'Desconhecido';
   }
 
-  static IconData _getIconFromCondition(String condition) {
-    switch (condition.toLowerCase()) {
-      case 'clear':
-        return Icons.wb_sunny;
-      case 'clouds':
-        return Icons.wb_cloudy;
-      case 'rain':
-        return Icons.grain;
-      case 'drizzle':
-        return Icons.grain;
-      case 'thunderstorm':
-        return Icons.flash_on;
-      case 'snow':
-        return Icons.ac_unit;
-      case 'mist':
-      case 'fog':
-        return Icons.foggy;
-      default:
-        return Icons.wb_sunny;
-    }
+  static IconData _getIconFromCondition(int code) {
+    return _conditionMap[code]?['icon'] ?? Icons.help_outline;
   }
+
+  static final Map<int, Map<String, dynamic>> _conditionMap = {
+    1000: {'icon': Icons.wb_sunny, 'translation': 'Ensolarado'},
+    1003: {'icon': Icons.wb_cloudy, 'translation': 'Parcialmente Nublado'},
+    1006: {'icon': Icons.cloud, 'translation': 'Nublado'},
+    1009: {'icon': Icons.cloud_queue, 'translation': 'Encoberto'},
+    1030: {'icon': Icons.foggy, 'translation': 'Neblina'},
+    1063: {'icon': Icons.grain, 'translation': 'Possibilidade de Chuva'},
+    1066: {'icon': Icons.ac_unit, 'translation': 'Possibilidade de Neve'},
+    1069: {'icon': Icons.ac_unit, 'translation': 'Possibilidade de Aguaceiros'},
+    1072: {'icon': Icons.grain, 'translation': 'Possibilidade de Garoa Congelante'},
+    1087: {'icon': Icons.flash_on, 'translation': 'Possibilidade de Trovoadas'},
+    1114: {'icon': Icons.snowing, 'translation': 'Vento com Neve'},
+    1117: {'icon': Icons.snowing, 'translation': 'Nevasca'},
+    1135: {'icon': Icons.foggy, 'translation': 'Névoa'},
+    1147: {'icon': Icons.ac_unit, 'translation': 'Névoa Congelante'},
+    1150: {'icon': Icons.grain, 'translation': 'Garoa Leve'},
+    1153: {'icon': Icons.grain, 'translation': 'Garoa'},
+    1168: {'icon': Icons.grain, 'translation': 'Garoa Congelante'},
+    1171: {'icon': Icons.grain, 'translation': 'Garoa Congelante Forte'},
+    1180: {'icon': Icons.grain, 'translation': 'Chuva Fraca'},
+    1183: {'icon': Icons.grain, 'translation': 'Chuva Leve'},
+    1186: {'icon': Icons.grain, 'translation': 'Chuva Moderada às Vezes'},
+    1189: {'icon': Icons.grain, 'translation': 'Chuva Moderada'},
+    1192: {'icon': Icons.grain, 'translation': 'Chuva Forte às Vezes'},
+    1195: {'icon': Icons.grain, 'translation': 'Chuva Forte'},
+    1198: {'icon': Icons.ac_unit, 'translation': 'Chuva Congelante Leve'},
+    1201: {'icon': Icons.ac_unit, 'translation': 'Chuva Congelante Moderada ou Forte'},
+    1204: {'icon': Icons.ac_unit, 'translation': 'Aguaceiros de Neve Leve'},
+    1207: {'icon': Icons.ac_unit, 'translation': 'Aguaceiros de Neve Moderada ou Forte'},
+    1210: {'icon': Icons.ac_unit, 'translation': 'Neve Fraca'},
+    1213: {'icon': Icons.ac_unit, 'translation': 'Neve Leve'},
+    1216: {'icon': Icons.ac_unit, 'translation': 'Neve Moderada às Vezes'},
+    1219: {'icon': Icons.ac_unit, 'translation': 'Neve Moderada'},
+    1222: {'icon': Icons.ac_unit, 'translation': 'Neve Forte às Vezes'},
+    1225: {'icon': Icons.ac_unit, 'translation': 'Neve Forte'},
+    1237: {'icon': Icons.ac_unit, 'translation': 'Granizo de Gelo'},
+    1240: {'icon': Icons.grain, 'translation': 'Aguaceiros Leves'},
+    1243: {'icon': Icons.grain, 'translation': 'Aguaceiros Moderados ou Fortes'},
+    1246: {'icon': Icons.grain, 'translation': 'Aguaceiros Torrenciais'},
+    1249: {'icon': Icons.ac_unit, 'translation': 'Aguaceiros de Neve Leve'},
+    1252: {'icon': Icons.ac_unit, 'translation': 'Aguaceiros de Neve Moderada ou Forte'},
+    1255: {'icon': Icons.ac_unit, 'translation': 'Neve Leve'},
+    1258: {'icon': Icons.ac_unit, 'translation': 'Neve Moderada ou Forte'},
+    1261: {'icon': Icons.ac_unit, 'translation': 'Aguaceiros de Granizo Leve'},
+    1264: {'icon': Icons.ac_unit, 'translation': 'Aguaceiros de Granizo Moderada ou Forte'},
+    1273: {'icon': Icons.flash_on, 'translation': 'Chuva Leve com Trovoadas'},
+    1276: {'icon': Icons.flash_on, 'translation': 'Chuva Moderada ou Forte com Trovoadas'},
+    1279: {'icon': Icons.flash_on, 'translation': 'Neve Leve com Trovoadas'},
+    1282: {'icon': Icons.flash_on, 'translation': 'Neve Moderada ou Forte com Trovoadas'},
+  };
 }
 
 class WeatherForecast {
@@ -103,37 +119,40 @@ class WeatherForecast {
 
   // Factory constructor para criar WeatherForecast a partir de JSON da API
   factory WeatherForecast.fromJson(Map<String, dynamic> json) {
-    final main = json['main'];
-    final weather = json['weather'][0];
-    final dateTime = DateTime.parse(json['dt_txt']);
-    
+    final day = json['day'];
+    final condition = day['condition'];
+    final conditionCode = condition['code'] as int;
+    final date = DateTime.parse(json['date']);
+
     return WeatherForecast(
-      dayOfWeek: _formatDayOfWeek(dateTime),
-      icon: Weather._getIconFromCondition(weather['main']),
-      maxTemp: (main['temp_max'] as num).toDouble(),
-      minTemp: (main['temp_min'] as num).toDouble(),
-      condition: Weather._translateCondition(weather['main']),
-      date: dateTime,
+      dayOfWeek: _getDayOfWeek(date.weekday),
+      icon: Weather._getIconFromCondition(conditionCode),
+      maxTemp: (day['maxtemp_c'] as num).toDouble(),
+      minTemp: (day['mintemp_c'] as num).toDouble(),
+      condition: Weather._translateCondition(conditionCode),
+      date: date,
     );
   }
 
-  set city(city) {}
-
-  static String _formatDayOfWeek(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(date.year, date.month, date.day);
-    
-    final difference = targetDate.difference(today).inDays;
-    
-    if (difference == 0) return 'Hoje';
-    if (difference == 1) return 'Amanhã';
-    
-    const weekdays = [
-      'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'
-    ];
-    
-    return weekdays[date.weekday - 1];
+  static String _getDayOfWeek(int day) {
+    switch (day) {
+      case DateTime.monday:
+        return 'Seg';
+      case DateTime.tuesday:
+        return 'Ter';
+      case DateTime.wednesday:
+        return 'Qua';
+      case DateTime.thursday:
+        return 'Qui';
+      case DateTime.friday:
+        return 'Sex';
+      case DateTime.saturday:
+        return 'Sáb';
+      case DateTime.sunday:
+        return 'Dom';
+      default:
+        return '';
+    }
   }
 }
 

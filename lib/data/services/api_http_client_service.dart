@@ -12,12 +12,6 @@ class ApiHttpClientService {
     Map<String, String>? headers,
   }) async {
     try {
-      
-      // TODO: Remover Future.delayed e _mockResponse() após testes
-      // usando mock provisioriamente
-      Future.delayed(Duration(seconds: 5));
-      return _mockResponse();
-
       final response = await http
           .get(
             Uri.parse(url),

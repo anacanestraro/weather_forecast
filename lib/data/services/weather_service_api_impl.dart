@@ -23,26 +23,22 @@ class WeatherApiService implements IWeatherService {
     }
   }
 
-  // Buscar previsão de 5 dias
+  // Buscar previsão (dias definidos no ApiConfig, ex: 5 dias)
   @override
   Future<ForecastResult> getForecast(String cityName) async {
     try {
       final url = ApiConfig.buildForecastUrl(cityName);
       final data = await ApiHttpClientService.get(url);
 
-      final List<dynamic> forecastList = data['list'];
+      final List<dynamic> forecastList = data['forecast']['forecastday'];
       final forecast =
-          forecastList
-              .where((item) => _isDailyForecast(item['dt_txt']))
-              .take(5)
-              .map((item) => WeatherForecast.fromJson(item))
-              .toList();
+          forecastList.map((item) => WeatherForecast.fromJson(item)).toList();
 
       return Success(forecast);
     } on ApiException catch (e) {
       return Error(ApiException(e.msg));
     } catch (e) {
-      return Error(DefaultError('Erro ao buscar clima atual: $e.'));
+      return Error(DefaultError('Erro ao buscar previsão: $e.'));
     }
   }
 
@@ -72,24 +68,15 @@ class WeatherApiService implements IWeatherService {
       final url = ApiConfig.buildForecastByCoordinatesUrl(lat, lon);
       final data = await ApiHttpClientService.get(url);
 
-      final List<dynamic> forecastList = data['list'];
+      final List<dynamic> forecastList = data['forecast']['forecastday'];
       final forecast =
-          forecastList
-              .where((item) => _isDailyForecast(item['dt_txt']))
-              .take(5)
-              .map((item) => WeatherForecast.fromJson(item))
-              .toList();
+          forecastList.map((item) => WeatherForecast.fromJson(item)).toList();
 
       return Success(forecast);
     } on ApiException catch (e) {
       return Error(ApiException(e.msg));
     } catch (e) {
-      return Error(DefaultError('Erro ao buscar clima atual: $e.'));
+      return Error(DefaultError('Erro ao buscar previsão: $e.'));
     }
-  }
-
-  // Filtrar apenas previsões diárias (12:00)
-  static bool _isDailyForecast(String dateTime) {
-    return dateTime.contains('12:00:00');
   }
 }
